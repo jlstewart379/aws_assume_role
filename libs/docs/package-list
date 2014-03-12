@@ -1,0 +1,3 @@
+com.amazon.identity.auth.device
+com.amazon.identity.auth.device.authorization.api
+com.amazon.identity.auth.device.shared
