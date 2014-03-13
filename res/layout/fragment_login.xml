@@ -5,7 +5,7 @@
     android:orientation="vertical" >
 
     <ImageButton
-        android:id="@+id/login_with_amazon"
+        android:id="@+id/login_with_amazon_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
