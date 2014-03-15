@@ -148,6 +148,24 @@ public class LoginFragment extends Fragment {
 			token = response
 					.getString("com.amazon.identity.auth.device.authorization.token");
 
+			WebIdentityFederationSessionCredentialsProvider wif = new WebIdentityFederationSessionCredentialsProvider(
+					token, "www.amazon.com",
+					"arn:aws:iam::541242782423:role/TestWebIdentityRole");
+
+			String subjectFromWIF = wif.getSubjectFromWIF();
+
+			Log.d("AuthTokenListener - onSuccess",
+					"Got something from the wif: " + subjectFromWIF);
+
+			AWSCredentials credentials = wif.getCredentials();
+
+			Log.d("Auth token listener",
+					"Received temporary security credentials. The Access Key is: "
+							+ credentials.getAWSAccessKeyId()
+							+ " the secret key is: "
+							+ credentials.getAWSSecretKey()
+							+ " the session token is: ");
+
 			AssumeRoleWithWebIdentityRequest request = new AssumeRoleWithWebIdentityRequest();
 			request.setProviderId("www.amazon.com");
 			request.setRoleArn("arn:aws:iam::541242782423:role/TestWebIdentityRole");
@@ -155,35 +173,19 @@ public class LoginFragment extends Fragment {
 			request.setWebIdentityToken(token);
 			request.setDurationSeconds(3600);
 
-			WebIdentityFederationSessionCredentialsProvider wif = new WebIdentityFederationSessionCredentialsProvider(
-					token, "www.amazon.com",
-					"arn:aws:iam::541242782423:role/TestWebIdentityRole");
+			AWSSecurityTokenServiceClient client = new AWSSecurityTokenServiceClient(
+					credentials);
+			AssumeRoleWithWebIdentityResult result = client
+					.assumeRoleWithWebIdentity(request);
 
-			String subjectFromWIF = wif.getSubjectFromWIF();
-			
-			Log.d("AuthTokenListener - onSuccess",
-					"Got something from the wif: " + subjectFromWIF);
+			Log.d("Auth token listener -onSuccess AssumeRoleResult",
+					"Received Result from assuming role: "
+							+ result.getCredentials().getAccessKeyId()
+							+ " the secret key is: "
+							+ result.getCredentials().getSecretAccessKey()
+							+ " the session token is: "
+							+ result.getCredentials().getSessionToken());
 
-			// AWSSecurityTokenServiceAsyncClient client = new
-			// AWSSecurityTokenServiceAsyncClient();
-
-			// AWSSecurityTokenServiceClient client = new
-			// AWSSecurityTokenServiceClient();
-			// AssumeRoleWithWebIdentityResult result = client
-			// .assumeRoleWithWebIdentity(request);
-
-			 AWSCredentials credentials = wif.getCredentials();
-			 
-
-			
-			 Log.d("Auth token listener",
-			 "Received temporary security credentials. The Access Key is: "
-			 + credentials.getAWSAccessKeyId()
-			 + " the secret key is: "
-			 + credentials.getAWSSecretKey()
-			 + " the session token is: "
-			 );
-			
 		}
 	}
 }
