@@ -8,8 +8,28 @@
         android:id="@+id/login_with_amazon_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_gravity="center|center_vertical"
         android:contentDescription="@string/the_login_button"
         android:src="@drawable/btnlwa_drkgry_login" />
+
+    <Button
+        android:id="@+id/list_buckets_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|center_vertical"
+        android:text="@string/list_objects" />
+
+    <TextView
+        android:id="@+id/list_buckets_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|center_horizontal"
+        android:text="@string/objects_found_" />
+
+    <TextView
+        android:id="@+id/listed_buckets_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|center_horizontal" />
 
 </LinearLayout>

@@ -9,7 +9,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazon.identity.auth.device.AuthError;
@@ -17,23 +19,18 @@ import com.amazon.identity.auth.device.authorization.api.AmazonAuthorizationMana
 import com.amazon.identity.auth.device.authorization.api.AuthorizationListener;
 import com.amazon.identity.auth.device.authorization.api.AuthzConstants;
 import com.amazon.identity.auth.device.shared.APIListener;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSCredentialsProviderChain;
-import com.amazonaws.auth.AWSSessionCredentials;
 import com.amazonaws.auth.WebIdentityFederationSessionCredentialsProvider;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceAsyncClient;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
-import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
-import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest;
-import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityResult;
-import com.amazonaws.services.securitytoken.model.Credentials;
+import com.amazonaws.services.s3.AmazonS3Client;
 
 public class LoginFragment extends Fragment {
 
 	private ImageButton loginButton;
+	private Button listBucketsButton;
+	private TextView bucketsList;
 	private AmazonAuthorizationManager mAuthManager;
+	private WebIdentityFederationSessionCredentialsProvider wif;
 	private String[] AUTH_SCOPES = new String[] { "profile" };
+	public AmazonS3Client s3Client;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -48,6 +45,8 @@ public class LoginFragment extends Fragment {
 			Bundle savedInstanceState) {
 
 		View view = inflater.inflate(R.layout.fragment_login, null);
+		bucketsList = (TextView) view
+				.findViewById(R.id.listed_buckets_textView);
 
 		loginButton = (ImageButton) view
 				.findViewById(R.id.login_with_amazon_button);
@@ -62,7 +61,32 @@ public class LoginFragment extends Fragment {
 			}
 		});
 
+		listBucketsButton = (Button) view
+				.findViewById(R.id.list_buckets_button);
+		listBucketsButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				listAccountBuckets();
+			}
+		});
+
 		return view;
+	}
+
+	private void listAccountBuckets() {
+		new ListBucketsTask(this).execute(s3Client);
+	}
+
+	/**
+	 * Callback for ListBucketsTask.
+	 * 
+	 * @param buckets
+	 *            - the list of buckets returned from task
+	 */
+	public void listObjectsOnScreen(String names) {
+		bucketsList.setText(names);
 	}
 
 	private class AuthListener implements AuthorizationListener {
@@ -111,7 +135,7 @@ public class LoginFragment extends Fragment {
 			String email = profileData
 					.getString(AuthzConstants.PROFILE_KEY.EMAIL.val);
 
-			Log.e("Profile Listener - onSuccess", "We have bundle data. Id: "
+			Log.d("Profile Listener - onSuccess", "We have bundle data. Id: "
 
 			+ id + " Name: " + name + " Email: " + email);
 
@@ -134,58 +158,25 @@ public class LoginFragment extends Fragment {
 
 			String token = "";
 
+			// log the success response
 			for (Iterator<String> itr = response.keySet().iterator(); itr
 					.hasNext();) {
 
 				String key = itr.next();
-				Log.i("AuthToken Listener - onSuccess",
+				Log.d("AuthToken Listener - onSuccess",
 						"Successfully received auth token response with key: "
 								+ key);
-				Log.i("AuthToken Listener - onSuccess",
+				Log.d("AuthToken Listener - onSuccess",
 						"The value of that key is: " + response.getString(key));
 			}
 
 			token = response
 					.getString("com.amazon.identity.auth.device.authorization.token");
 
-			WebIdentityFederationSessionCredentialsProvider wif = new WebIdentityFederationSessionCredentialsProvider(
-					token, "www.amazon.com",
+			wif = new WebIdentityFederationSessionCredentialsProvider(token,
+					"www.amazon.com",
 					"arn:aws:iam::541242782423:role/TestWebIdentityRole");
-
-			String subjectFromWIF = wif.getSubjectFromWIF();
-
-			Log.d("AuthTokenListener - onSuccess",
-					"Got something from the wif: " + subjectFromWIF);
-
-			AWSCredentials credentials = wif.getCredentials();
-
-			Log.d("Auth token listener",
-					"Received temporary security credentials. The Access Key is: "
-							+ credentials.getAWSAccessKeyId()
-							+ " the secret key is: "
-							+ credentials.getAWSSecretKey()
-							+ " the session token is: ");
-
-			AssumeRoleWithWebIdentityRequest request = new AssumeRoleWithWebIdentityRequest();
-			request.setProviderId("www.amazon.com");
-			request.setRoleArn("arn:aws:iam::541242782423:role/TestWebIdentityRole");
-			request.setRoleSessionName("AmazonTestLoginSession");
-			request.setWebIdentityToken(token);
-			request.setDurationSeconds(3600);
-
-			AWSSecurityTokenServiceClient client = new AWSSecurityTokenServiceClient(
-					credentials);
-			AssumeRoleWithWebIdentityResult result = client
-					.assumeRoleWithWebIdentity(request);
-
-			Log.d("Auth token listener -onSuccess AssumeRoleResult",
-					"Received Result from assuming role: "
-							+ result.getCredentials().getAccessKeyId()
-							+ " the secret key is: "
-							+ result.getCredentials().getSecretAccessKey()
-							+ " the session token is: "
-							+ result.getCredentials().getSessionToken());
-
+			s3Client = new AmazonS3Client(wif);
 		}
 	}
 }
