@@ -175,7 +175,7 @@ public class LoginFragment extends Fragment {
 
 			wif = new WebIdentityFederationSessionCredentialsProvider(token,
 					"www.amazon.com",
-					"arn:aws:iam::541242782423:role/TestWebIdentityRole");
+					""); //add arn for role
 			s3Client = new AmazonS3Client(wif);
 		}
 	}
